@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trabajando con Imágenes</title>
+
+  <style>
+    html, body, #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    } 
+
+    button {
+      position: absolute;
+      top: 30px;
+      padding: 5px;
+      background-color: rgb(31, 31, 31);
+      color: rgb(219, 219, 219);
+      border-radius: 8px;
+      font-family: monospace;
+    }
+
+    #geologia {
+      right: 150px;
+    }
+
+    #colorNatural {
+      right: 30px;
+    }
+  </style>
+  
+  <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/dark/main.css">
+  <script src="https://js.arcgis.com/4.28/"></script>
+
+  <script defer>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/ImageryTileLayer",
+      "esri/layers/support/RasterFunction",
+      "esri/layers/support/rasterFunctionConstants"
+    ], function (Map, MapView, ImageryTileLayer, RasterFunction, rasterFunctionConstants) {
+
+      let map = new Map({
+        basemap: "topo-vector"
+      });
+
+      let view = new MapView({
+        container: "viewDiv",
+        map: map,
+        zoom: 13,
+        center: [-16.44, 28.38]
+      });
+
+      let funcionRaster = new RasterFunction({
+        "functionName": "NDVI",
+        "functionArguments": {
+            "visibleBandID": 3,
+            "infraredBandID": 7,
+        }
+      })
+
+      let colormap = new RasterFunction({
+        functionName: "Colormap",
+        functionArguments: {
+            colormapName: rasterFunctionConstants.colormapName.NDVI2,
+            raster: funcionRaster
+        }
+      });
+
+      let imagen = new ImageryTileLayer({
+        url: "https://tiledimageservices1.arcgis.com/MPSkeshhtFz9vjCL/arcgis/rest/services/Imagen_Incendio_Canarias___Sentinel_2/ImageServer",
+        rasterFunction:colormap,
+        effect: "saturate(150%)",
+      })
+
+      map.add(imagen);
+
+    });
+  </script>
+
+</head>
+<body>
+  <div id="viewDiv"></div>
+  <button id="geologia">Geología</button>
+  <button id="colorNatural">Color Natural</button>
+</body>
+</html>

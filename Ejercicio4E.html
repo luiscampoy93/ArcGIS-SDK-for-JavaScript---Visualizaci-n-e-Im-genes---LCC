@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popups</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.27/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.27/"></script>
+
+    <style>
+        html,
+        body,
+        #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        }
+    </style>
+
+<script defer>
+    require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/core/reactiveUtils"
+    ], (Map, MapView, FeatureLayer, reactiveUtils) => {
+
+        let mapa = new Map({
+            basemap: "dark-gray-vector"
+        });
+
+        // Acción personalizada para el popup
+        var viewRotateAction = {
+            title: "Rotar",
+            id: "rotate",
+            className: "esri-icon-rotate"
+        };
+
+        // Plantilla para el popup
+        let plantillaPopup = {
+            title: "Zona de reserva de {SONAME}",
+            content: [
+                {
+                    type: "fields",
+                    fieldInfos: [
+                        { fieldName: "SITE_NAME", label: "Comunidad Autónoma" },
+                        { fieldName: "TIPO", label: "Tipo de reserva" },
+                        { fieldName: "HECTAREAS", label: "Hectáreas",
+                          
+                        },
+                    ]
+                }
+            ],
+            actions: [viewRotateAction]
+        };
+
+        // Capa con simbología y popup configurado
+        let capa = new FeatureLayer({
+            url: "https://services1.arcgis.com/nCKYwcSONQTkPA4K/arcgis/rest/services/Red_Natura_2000/FeatureServer",
+            renderer: {
+                type: "unique-value",
+                field: "TIPO",
+                defaultSymbol: {
+                    type: "simple-fill",
+                    color: [200, 200, 200, 0.5], // Color gris semitransparente para valores sin categoría
+                    outline: { color: "black", width: 1 }
+                },
+                uniqueValueInfos: [
+                    {
+                        value: "ZEPA",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [187, 255, 0, 1],
+                            style: "diagonal-cross",
+                            outline: { color: "black", width: 1 }
+                        }
+                    },
+                    {
+                        value: "LIC",
+                        symbol: {
+                            type: "simple-fill",
+                            color: [255, 102, 0, 0.7],
+                            outline: { color: "black", width: 1 }
+                        }
+                    }
+                ]
+            },
+            popupTemplate: plantillaPopup
+        });
+
+        // Agregar la capa antes de inicializar la vista
+        mapa.add(capa);
+
+        // Creación de la vista del mapa
+        let vista = new MapView({
+            container: "viewDiv",
+            map: mapa,
+            center: [-5.7084, 35.3467],
+            zoom: 4,
+            popup: {
+                dockEnabled: true,
+                dockOptions: {
+                    buttonEnabled: false,
+                    breakpoint: false,
+                    position: "bottom-left"
+                }
+            }
+        });
+
+        // Función para rotar la vista
+        function rotateView() {
+            vista.goTo({ rotation: 45 });
+        }
+
+        // Corrección en la detección del evento de popup
+        reactiveUtils.watch(
+            () => vista.popup.viewModel.active,
+            (isActive) => {
+                if (isActive && vista.popup.selectedAction && vista.popup.selectedAction.id === "rotate") {
+                    rotateView();
+                }
+            }
+        );
+    });
+</script>
+
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+</body>
+</html>
